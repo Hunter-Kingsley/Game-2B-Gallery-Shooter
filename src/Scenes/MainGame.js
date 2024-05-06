@@ -27,6 +27,7 @@ class MainGame extends Phaser.Scene {
                 my.sprite.background.push(this.add.image((i*256), (j*256), "background"));
             }
         }
+        //bruh moment
 
         my.sprite.player = new Player(this, game.config.width/2, game.config.height - 45, "Player", null, this.left, this.right, 2);
         my.sprite.player.setScale(0.60);

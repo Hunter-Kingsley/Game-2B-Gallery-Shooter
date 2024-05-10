@@ -35,11 +35,20 @@ class MainGame extends Phaser.Scene {
         this.counter = 0;
         this.wave_num = 1;
         this.random_num = 0;
+        this.alive_enemies = 8;
         this.duck_on_cooldown = [];
+        this.duck_health = [];
         for (let i = 0; i < 8; i++) {
             this.duck_on_cooldown.push(false);
+            this.duck_health.push(5);
         }
 
+    }
+
+    collides(a, b) {
+        if (Math.abs(a.x - b.x) > (a.displayWidth/2 + b.displayWidth/2)) return false;
+        if (Math.abs(a.y - b.y) > (a.displayHeight/2 + b.displayHeight/2)) return false;
+        return true;
     }
 
     new_enemy(start_x, start_y, is_enemy_A) {
@@ -115,7 +124,7 @@ class MainGame extends Phaser.Scene {
             }
         }
 
-        my.sprite.player = new Player(this, game.config.width/2, game.config.height - 55, "Player", null, this.left, this.right, 2);
+        my.sprite.player = new Player(this, game.config.width/2, game.config.height - 55, "Player", null, this.left, this.right, 5);
         my.sprite.player.setScale(0.70);
 
         my.sprite.bulletGroup = this.add.group({
@@ -210,6 +219,23 @@ class MainGame extends Phaser.Scene {
 
         this.eggCooldownCounter--;
         my.sprite.enemies.forEach( (duck, i) => {
+            my.sprite.bulletGroup.getChildren().forEach( (bullet) => {
+                if (bullet.active) {
+                    if (this.collides(bullet, duck)) {
+                        this.duck_health[i]--;
+                        bullet.makeInactive();
+                        console.log(this.duck_health);
+                    }
+                }
+            });
+
+            if (this.duck_health[i] == 0) {
+                duck.active = false;
+                duck.visible = false;
+                duck.x = -50;
+                duck.y = -50;
+            }
+
             if((duck.y > 330) && (my.random_num < 10)) {
                 if (this.duck_on_cooldown[i] == false) {
                     if (this.eggCooldownCounter < 0) {
@@ -227,6 +253,16 @@ class MainGame extends Phaser.Scene {
                 }
             }
         });
+
+        my.sprite.eggGroup.getChildren().forEach( (egg) => {
+            if (egg.y > (game.config.height - my.sprite.player.displayHeight - 50)   ) {
+                if (this.collides(my.sprite.player, egg)) {
+                    // Remove Player Health
+                }
+            }
+        });
+
+        
 
         my.sprite.player.update();
         this.counter++;

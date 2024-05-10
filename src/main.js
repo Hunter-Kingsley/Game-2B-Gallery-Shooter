@@ -21,7 +21,8 @@ let config = {
     },
     width: 1000,
     height: 800,
-    scene: [MainGame]
+    scene: [MainGame],
+    fps: {target: 30}
 }
 
 const game = new Phaser.Game(config);

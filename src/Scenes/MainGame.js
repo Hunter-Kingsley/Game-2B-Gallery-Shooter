@@ -26,7 +26,7 @@ class MainGame extends Phaser.Scene {
         ];
 
         this.bulletSpeed = 2.5;
-        this.eggSpeed = 1.5;
+        this.eggSpeed = 5;
         this.bulletCooldown = 20;
         this.eggCooldown = 10;
         this.bulletCooldownCounter = 0;

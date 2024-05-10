@@ -26,11 +26,19 @@ class MainGame extends Phaser.Scene {
         ];
 
         this.bulletSpeed = 2.5;
+        this.eggSpeed = 1.5;
         this.bulletCooldown = 20;
+        this.eggCooldown = 10;
         this.bulletCooldownCounter = 0;
+        this.eggCooldownCounter = 0;
 
         this.counter = 0;
         this.wave_num = 1;
+        this.random_num = 0;
+        this.duck_on_cooldown = [];
+        for (let i = 0; i < 8; i++) {
+            this.duck_on_cooldown.push(false);
+        }
 
     }
 
@@ -66,7 +74,7 @@ class MainGame extends Phaser.Scene {
                 to: 1,
                 duration: 7000,
                 ease: 'Phaser.Math.Easing.Cubic.Out',
-                delay: (index * 300)
+                delay: (index * 250)
             }
             duck.startFollow(argumetns);
             
@@ -87,6 +95,10 @@ class MainGame extends Phaser.Scene {
         this.load.setPath("./assets/Shooting_Gallery/PNG/Objects/");
         this.load.image("Duck_A", "duck_yellow.png");
         this.load.image("Duck_B", "duck_white.png");
+
+        this.load.setPath("./assets/Pixel_Mart/");
+        this.load.image("Egg", "egg_white.png");
+
     }
 
     create() {
@@ -127,6 +139,28 @@ class MainGame extends Phaser.Scene {
 
         my.sprite.bulletGroup.propertyValueSet("speed", this.bulletSpeed);
 
+        my.sprite.eggGroup = this.add.group({
+            active: true,
+            defaultKey: "Egg",
+            maxSize: 14,
+            runChildUpdate: true
+            }
+        )
+
+        my.sprite.eggGroup.createMultiple({
+            classType: Egg,
+            active: false,
+            key: my.sprite.eggGroup.defaultKey,
+            repeat: my.sprite.eggGroup.maxSize-1
+        });
+
+        my.sprite.eggGroup.getChildren().forEach((egg) => {
+            egg.makeInactive();
+        });
+
+        my.sprite.eggGroup.propertyValueSet("speed", this.eggSpeed);
+        my.sprite.eggGroup.propertyValueSet("scale", 1.3);
+
         this.new_enemy(450, 80, true);
         this.new_enemy(540, 80, false);
         this.new_enemy(400, 160, false);
@@ -144,12 +178,21 @@ class MainGame extends Phaser.Scene {
 
     update() {
         let my = this.my;
+        my.random_num = Math.ceil(Math.random() * 1000);
 
         if ((this.counter % 1600) == 0) {
             this.send_waves(this.wave_num);
             if (this.wave_num < this.my.sprite.enemies.length) {
                 this.wave_num += 2;
             }
+        }
+
+        if ((this.counter % 400) == 0) {
+            console.log("reset");
+            for (let i = 0; i < 8; i++) {
+                this.duck_on_cooldown[i] = false;
+            }
+            console.log(this.duck_on_cooldown);
         }
 
         this.bulletCooldownCounter--;
@@ -164,6 +207,26 @@ class MainGame extends Phaser.Scene {
                 }
             }
         }
+
+        this.eggCooldownCounter--;
+        my.sprite.enemies.forEach( (duck, i) => {
+            if((duck.y > 330) && (my.random_num < 10)) {
+                if (this.duck_on_cooldown[i] == false) {
+                    if (this.eggCooldownCounter < 0) {
+                        my.random_num = Math.ceil(Math.random() * 1000);
+                        let egg = my.sprite.eggGroup.getFirstDead();
+                        if (egg != null) {
+                            this.duck_on_cooldown[i] = true;
+                            console.log(this.duck_on_cooldown);
+                            this.eggCooldownCounter = this.eggCooldown;
+                            egg.makeActive();
+                            egg.x = duck.x;
+                            egg.y = duck.y;
+                        }
+                    }
+                }
+            }
+        });
 
         my.sprite.player.update();
         this.counter++;

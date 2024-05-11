@@ -49,6 +49,9 @@ class MainGame extends Phaser.Scene {
     }
 
     init_game() {
+        this.my.sprite.background = [];
+        this.my.sprite.enemies = [];
+
         this.player_health = 3;
         this.player_score = 0;
 
@@ -258,18 +261,21 @@ class MainGame extends Phaser.Scene {
         
 
         this.bulletCooldownCounter--;
-        if (Phaser.Input.Keyboard.JustDown(this.space)) {
-            if (this.bulletCooldownCounter < 0) {
-                let bullet = my.sprite.bulletGroup.getFirstDead();
-                if (bullet != null) {
-                    this.bulletCooldownCounter = this.bulletCooldown;
-                    bullet.makeActive();
-                    this.sound.play("throw");
-                    bullet.x = my.sprite.player.x;
-                    bullet.y = my.sprite.player.y - (my.sprite.player.displayHeight/2);
+        if (this.player_health > 0) {
+            if (Phaser.Input.Keyboard.JustDown(this.space)) {
+                if (this.bulletCooldownCounter < 0) {
+                    let bullet = my.sprite.bulletGroup.getFirstDead();
+                    if (bullet != null) {
+                        this.bulletCooldownCounter = this.bulletCooldown;
+                        bullet.makeActive();
+                        this.sound.play("throw");
+                        bullet.x = my.sprite.player.x;
+                        bullet.y = my.sprite.player.y - (my.sprite.player.displayHeight/2);
+                    }
                 }
             }
         }
+        
 
         this.eggCooldownCounter--;
         my.sprite.enemies.forEach( (duck, i) => {

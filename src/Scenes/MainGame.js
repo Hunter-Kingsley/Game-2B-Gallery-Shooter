@@ -121,8 +121,9 @@ class MainGame extends Phaser.Scene {
                 ease: 'Phaser.Math.Easing.Cubic.Out',
                 delay: (index * 250)
             }
-            duck.startFollow(argumetns);
-            
+            if (duck.active) {
+                duck.startFollow(argumetns);
+            }
             index--;
         }
     }
@@ -286,6 +287,7 @@ class MainGame extends Phaser.Scene {
             if (this.duck_health[i] == 0) {
                 this.duck_health[i]--;
                 this.sound.play("quack");
+                duck.stopFollow();
                 duck.x = -50;
                 duck.y = -50;
                 duck.active = false;
@@ -318,10 +320,10 @@ class MainGame extends Phaser.Scene {
         my.sprite.eggGroup.getChildren().forEach( (egg) => {
             if (egg.y > (game.config.height - my.sprite.player.displayHeight - 50)   ) {
                 if (this.collides(my.sprite.player, egg)) {
-                    egg.makeInactive();
-                    this.sound.play("lose_health");
                     egg.x = -50;
                     egg.y = -50;
+                    egg.makeInactive();
+                    this.sound.play("lose_health");
                     this.player_health--;
                     this.updateHealth();
                 }

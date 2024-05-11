@@ -25,9 +25,12 @@ class MainGame extends Phaser.Scene {
             240, 339,
         ];
 
-        this.bulletSpeed = 2.5;
-        this.eggSpeed = 1.5;
-        this.bulletCooldown = 20;
+        this.player_health = 3;
+        this.player_score = 0;
+
+        this.bulletSpeed = 6;
+        this.eggSpeed = 4;
+        this.bulletCooldown = 10;
         this.eggCooldown = 10;
         this.bulletCooldownCounter = 0;
         this.eggCooldownCounter = 0;
@@ -43,6 +46,39 @@ class MainGame extends Phaser.Scene {
             this.duck_health.push(5);
         }
 
+    }
+
+    init_game() {
+        this.player_health = 3;
+        this.player_score = 0;
+
+        this.bulletSpeed = 6;
+        this.eggSpeed = 4;
+        this.bulletCooldown = 10;
+        this.eggCooldown = 10;
+        this.bulletCooldownCounter = 0;
+        this.eggCooldownCounter = 0;
+
+        this.counter = 0;
+        this.wave_num = 1;
+        this.random_num = 0;
+        this.alive_enemies = 8;
+        this.duck_on_cooldown = [];
+        this.duck_health = [];
+        for (let i = 0; i < 8; i++) {
+            this.duck_on_cooldown.push(false);
+            this.duck_health.push(5);
+        }
+    }
+
+    updateScore() {
+        let my = this.my;
+        my.text.score.setText("Score: " + this.player_score);
+    }
+
+    updateHealth() {
+        let my = this.my;
+        my.text.health.setText("HP: " + this.player_health);
     }
 
     collides(a, b) {
@@ -98,9 +134,6 @@ class MainGame extends Phaser.Scene {
         this.load.setPath("./assets/Alien_UFO/PNG/");
         this.load.image("Player", "shipYellow_manned.png");
 
-        this.load.setPath("./assets/Shooting_Gallery/PNG/Stall/");
-        this.load.image("background", "bg_blue.png");
-
         this.load.setPath("./assets/Shooting_Gallery/PNG/Objects/");
         this.load.image("Duck_A", "duck_yellow.png");
         this.load.image("Duck_B", "duck_white.png");
@@ -108,15 +141,25 @@ class MainGame extends Phaser.Scene {
         this.load.setPath("./assets/Pixel_Mart/");
         this.load.image("Egg", "egg_white.png");
 
+        this.load.setPath("./assets/Digital_Audio/Audio/");
+        this.load.audio("lose_health", "phaserDown1.wav");
+        this.load.audio("quack", "quack_5.mp3");
+        this.load.audio("throw", "whoosh.mp3");
+        this.load.audio("eat", "phaserUp4.wav");
+        this.load.audio("win", "powerUp3.wav");
+        this.load.audio("egg_drop", "phaserDown2.wav");
     }
 
     create() {
         console.log('test log');
         let my = this.my;
 
+        this.init_game();
+
         this.left = this.input.keyboard.addKey("A");
         this.right = this.input.keyboard.addKey("D");
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.enter = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
 
         for(let i = 0; i < 5; i++) {
             for(let j = 0; j < 4; j++) {
@@ -130,7 +173,7 @@ class MainGame extends Phaser.Scene {
         my.sprite.bulletGroup = this.add.group({
             active: true,
             defaultKey: "Bullet",
-            maxSize: 4,
+            maxSize: 2,
             runChildUpdate: true
             }
         )
@@ -183,26 +226,35 @@ class MainGame extends Phaser.Scene {
             duck.setScale(0.7);
         }
 
+        my.text.score = this.add.bitmapText(25, 30, "Minecraft", "Score: " + this.player_score);
+        my.text.score.setFontSize(40);
+        my.text.score.setBlendMode(Phaser.BlendModes.ADD);
+        my.text.health = this.add.bitmapText(25, 60, "Minecraft", "HP: " + this.player_health);
+        my.text.health.setFontSize(40);
+        my.text.health.setBlendMode(Phaser.BlendModes.ADD);
     }
 
     update() {
         let my = this.my;
         my.random_num = Math.ceil(Math.random() * 1000);
 
-        if ((this.counter % 1600) == 0) {
-            this.send_waves(this.wave_num);
-            if (this.wave_num < this.my.sprite.enemies.length) {
-                this.wave_num += 2;
+        if (this.player_health > 0 && this.alive_enemies > 0) {
+            if ((this.counter % 600) == 0) {
+                this.send_waves(this.wave_num);
+                if (this.wave_num < this.my.sprite.enemies.length) {
+                    this.wave_num += 2;
+                }
             }
-        }
 
-        if ((this.counter % 400) == 0) {
-            console.log("reset");
-            for (let i = 0; i < 8; i++) {
-                this.duck_on_cooldown[i] = false;
+            if ((this.counter % 200) == 0) {
+                console.log("reset");
+                for (let i = 0; i < 8; i++) {
+                    this.duck_on_cooldown[i] = false;
+                }
+                console.log(this.duck_on_cooldown);
             }
-            console.log(this.duck_on_cooldown);
         }
+        
 
         this.bulletCooldownCounter--;
         if (Phaser.Input.Keyboard.JustDown(this.space)) {
@@ -211,6 +263,7 @@ class MainGame extends Phaser.Scene {
                 if (bullet != null) {
                     this.bulletCooldownCounter = this.bulletCooldown;
                     bullet.makeActive();
+                    this.sound.play("throw");
                     bullet.x = my.sprite.player.x;
                     bullet.y = my.sprite.player.y - (my.sprite.player.displayHeight/2);
                 }
@@ -223,6 +276,7 @@ class MainGame extends Phaser.Scene {
                 if (bullet.active) {
                     if (this.collides(bullet, duck)) {
                         this.duck_health[i]--;
+                        this.sound.play("eat");
                         bullet.makeInactive();
                         console.log(this.duck_health);
                     }
@@ -230,13 +284,19 @@ class MainGame extends Phaser.Scene {
             });
 
             if (this.duck_health[i] == 0) {
-                duck.active = false;
-                duck.visible = false;
+                this.duck_health[i]--;
+                this.sound.play("quack");
                 duck.x = -50;
                 duck.y = -50;
+                duck.active = false;
+                duck.visible = false;
+                this.player_score += (10 * this.player_health);
+                this.updateScore();
+                console.log(this.player_score);
+                this.alive_enemies--;
             }
 
-            if((duck.y > 330) && (my.random_num < 10)) {
+            if((duck.y > 330) && (my.random_num < 30)) {
                 if (this.duck_on_cooldown[i] == false) {
                     if (this.eggCooldownCounter < 0) {
                         my.random_num = Math.ceil(Math.random() * 1000);
@@ -246,8 +306,9 @@ class MainGame extends Phaser.Scene {
                             console.log(this.duck_on_cooldown);
                             this.eggCooldownCounter = this.eggCooldown;
                             egg.makeActive();
+                            this.sound.play("egg_drop");
                             egg.x = duck.x;
-                            egg.y = duck.y;
+                            egg.y = duck.y + 15;
                         }
                     }
                 }
@@ -257,14 +318,46 @@ class MainGame extends Phaser.Scene {
         my.sprite.eggGroup.getChildren().forEach( (egg) => {
             if (egg.y > (game.config.height - my.sprite.player.displayHeight - 50)   ) {
                 if (this.collides(my.sprite.player, egg)) {
-                    // Remove Player Health
+                    egg.makeInactive();
+                    this.sound.play("lose_health");
+                    egg.x = -50;
+                    egg.y = -50;
+                    this.player_health--;
+                    this.updateHealth();
                 }
             }
         });
 
-        
+        if (this.player_health == 0) {
+            this.player_health--;
+            my.sprite.player.killPlayer();
+            my.text.gameover1 = this.add.bitmapText(345, 500, "Minecraft", "You Lose!");
+            my.text.gameover1.setFontSize(80);
+            my.text.gameover1.setBlendMode(Phaser.BlendModes.ADD);
+            my.text.gameover2 = this.add.bitmapText(285, 570, "Minecraft", "Press [ENTER] to exit");
+            my.text.gameover2.setFontSize(50);
+            my.text.gameover2.setBlendMode(Phaser.BlendModes.ADD);
+        }
+
+        if (this.alive_enemies == 0) {
+            this.alive_enemies--;
+            this.sound.play("win");
+            my.text.gamewin = this.add.bitmapText(355, 300, "Minecraft", "You Win!");
+            my.text.gamewin.setFontSize(80);
+            my.text.gamewin.setBlendMode(Phaser.BlendModes.ADD);
+            my.text.gameover2 = this.add.bitmapText(285, 370, "Minecraft", "Press [ENTER] to exit");
+            my.text.gameover2.setFontSize(50);
+            my.text.gameover2.setBlendMode(Phaser.BlendModes.ADD);
+        }
+
+        if ((this.player_health <= 0 && Phaser.Input.Keyboard.JustDown(this.enter)) || (this.alive_enemies <= 0 && Phaser.Input.Keyboard.JustDown(this.enter))) {
+            this.scene.start("startScene");
+        }
 
         my.sprite.player.update();
-        this.counter++;
+        if (this.player_health > 0 && this.alive_enemies > 0) {
+            this.counter++;
+        }
+        
     }
 }

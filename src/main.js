@@ -21,7 +21,7 @@ let config = {
     },
     width: 1000,
     height: 800,
-    scene: [MainGame],
+    scene: [StartScreen, MainGame],
     fps: { forceSetTimeOut: true, target: 60 }
 }
 

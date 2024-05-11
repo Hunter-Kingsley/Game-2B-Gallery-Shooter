@@ -21,6 +21,8 @@ class Egg extends Phaser.GameObjects.Sprite {
     }
 
     makeInactive() {
+        this.x = -50;
+        this.y = -50;
         this.visible = false;
         this.active = false;
     }

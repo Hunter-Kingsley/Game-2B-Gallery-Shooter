@@ -34,4 +34,11 @@ class Player extends Phaser.GameObjects.Sprite {
         }
     }
 
+    killPlayer() {
+        this.visible = false;
+        this.active = false;
+        this.x = -100;
+        this.y = -100;
+    }
+
 }
